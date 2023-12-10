@@ -5,7 +5,7 @@ import { LuGitPullRequestDraft } from "react-icons/lu";
 
 export default function NavBar() {
   return (
-    <nav className="flex justify-between px-10 py-5 border-b">
+    <nav className="flex justify-between px-10 py-5 border-b mb-5">
       <Link href="/">
         <LuGitPullRequestDraft className="h-8 w-8" />
       </Link>
