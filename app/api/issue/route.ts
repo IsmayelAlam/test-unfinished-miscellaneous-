@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const newIssue = await prisma.issue.findMany({});
+  const newIssue = await prisma.issue.findMany();
 
   return NextResponse.json(newIssue);
 }

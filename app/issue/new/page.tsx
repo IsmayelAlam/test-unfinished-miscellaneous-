@@ -16,6 +16,7 @@ export default function NewIssue() {
     control,
     formState: { errors, isSubmitting },
   } = useForm<IssueForm>();
+
   const route = useRouter();
 
   const submitForm = async (data: IssueForm) => {
