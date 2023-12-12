@@ -27,7 +27,9 @@ export default async function Issue() {
         <Table.Body>
           {issues.map((issue) => (
             <Table.Row key={issue.id}>
-              <Table.Cell>{issue.title}</Table.Cell>
+              <Table.Cell>
+                <Link href={`/issue/${issue.id}`}>{issue.title}</Link>
+              </Table.Cell>
               <Table.Cell>
                 <IssueStatusBadge status={issue.status} />
               </Table.Cell>
