@@ -26,6 +26,7 @@ export default function NewIssue() {
         success: {
           render() {
             route.push("/issue");
+            route.refresh();
             return "New issue submitted 👌";
           },
         },

@@ -1,6 +1,6 @@
 import IssueStatusBadge from "@/components/IssueStatusBadge";
 import { PrismaClient } from "@prisma/client";
-import { Button, Table } from "@radix-ui/themes";
+import { Button, Link as RadixLink, Table } from "@radix-ui/themes";
 import Link from "next/link";
 import React from "react";
 
@@ -28,7 +28,9 @@ export default async function Issue() {
           {issues.map((issue) => (
             <Table.Row key={issue.id}>
               <Table.Cell>
-                <Link href={`/issue/${issue.id}`}>{issue.title}</Link>
+                <Link href={`/issue/${issue.id}`} legacyBehavior passHref>
+                  <RadixLink>{issue.title}</RadixLink>
+                </Link>
               </Table.Cell>
               <Table.Cell>
                 <IssueStatusBadge status={issue.status} />
