@@ -1,10 +1,10 @@
 import IssueStatusBadge from "@/components/IssueStatusBadge";
 import { PrismaClient } from "@prisma/client";
 import { Box, Button, Card, Flex, Grid, Heading, Text } from "@radix-ui/themes";
-import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { PiNotePencilLight } from "react-icons/pi";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 const prisma = new PrismaClient();
 
