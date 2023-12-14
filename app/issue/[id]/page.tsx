@@ -1,10 +1,11 @@
 import IssueStatusBadge from "@/components/IssueStatusBadge";
 import { PrismaClient } from "@prisma/client";
 import { Box, Button, Card, Flex, Grid, Heading, Text } from "@radix-ui/themes";
-import ReactMarkdown from "react-markdown";
-import { PiNotePencilLight } from "react-icons/pi";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PiNotePencilLight } from "react-icons/pi";
+import ReactMarkdown from "react-markdown";
+import DeleteBtn from "../_component/DeleteBtn";
 
 const prisma = new PrismaClient();
 
@@ -31,11 +32,12 @@ export default async function IssueDetailPage({
           <ReactMarkdown className="prose">{issue.description}</ReactMarkdown>
         </Card>
       </Box>
-      <Flex direction="column" gap="2">
-        <Button className="max-w-fit">
+      <Flex direction="column" gap="2" width="max-content">
+        <Button className="">
           <PiNotePencilLight />
           <Link href={`/issue/${params.id}/edit`}>Edit Issue</Link>
         </Button>
+        <DeleteBtn issueId={issue.id} />
       </Flex>
     </Grid>
   );
