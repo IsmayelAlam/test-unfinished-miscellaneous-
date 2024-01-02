@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+
+    <title>3D Galaxy - HTML5 Canvas and JavaScript - zachstronaut</title>
+
+    <style type="text/css">
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #000;
+        text-align: center;
+      }
+
+      canvas {
+        position: relative;
+        margin: 0 auto;
+        cursor: pointer;
+        z-index: 1;
+      }
+
+      #instructions {
+        position: relative;
+        top: 250px;
+        margin: 0 auto;
+        padding: 7px;
+        width: 300px;
+        color: #fff;
+        background: #000;
+        background: rgba(0, 0, 0, 0.75);
+        text-align: center;
+        z-index: 2;
+        font-family: sans-serif;
+        font-size: 14px;
+        line-height: 21px;
+        -webkit-border-radius: 8px;
+        -moz-border-radius: 8px;
+        -o-border-radius: 8px;
+        -ms-border-radius: 8px;
+        border-radius: 8px;
+      }
+
+      #safari {
+        display: none;
+      }
+
+      @media screen and (min-device-width: 1025px) {
+        #ios {
+          display: none;
+        }
+
+        #safari {
+          display: inline;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <p id="instructions">
+      <span id="ios">Use your fingers to rotate and spin the galaxy!</span
+      ><span id="safari"
+        >Rotate and spin the galaxy with your mouse!<br /><em
+          >(Try me on iOS, too.)</em
+        ></span
+      >
+    </p>
+
+    <canvas id="thecanvas" width="800" height="600"></canvas>
+
+    <script type="text/javascript">
+      // Zachary Johnson
+      // http://www.zachstronaut.com
+      // August 2010
+
+      var WIDTH = 800;
+      var HEIGHT = 600;
+
+      var px = [];
+      var py = [];
+      var pz = [];
+      var ps = [];
+      var pc = [];
+
+      var active;
+
+      var twoPi = Math.PI * 2;
+
+      var focalLength = 250;
+
+      var ry = -5;
+      var rx = 0.95;
+
+      var lastX = false;
+      var lastY = false;
+      var dx = 0;
+      var dy = 0;
+      var mouseDown = false;
+      var usingTouch = false;
+      var base = 1.0;
+      var scale = 1.0;
+
+      var canvas;
+      var ctx;
+
+      var safari = false;
+
+      var cc = 0;
+
+      ///window.onload = init;
+      init();
+
+      function init() {
+        var safariEl = document.getElementById("safari");
+        if (
+          getComputedStyle(safariEl, "").getPropertyValue("display") == "inline"
+        ) {
+          safari = true;
+        }
+
+        canvas = document.getElementById("thecanvas");
+
+        if (canvas) {
+          if (canvas.getContext) {
+            setTimeout(hideInstructions, 3500);
+
+            createRandomStarVolume();
+
+            ctx = canvas.getContext("2d");
+
+            ctx.translate(WIDTH / 2 - 25, HEIGHT / 2 - 25);
+
+            setupListeners();
+
+            spin(-6, 0);
+
+            draw();
+          }
+        }
+      }
+
+      function hideInstructions() {
+        document.getElementById("instructions").style.left = "-9999px";
+      }
+
+      function setupListeners() {
+        document.body.addEventListener("mousedown", mousedownHandler, false);
+        document.body.addEventListener("mouseup", mouseupHandler, false);
+        document.body.addEventListener("mousemove", mousemoveHandler, false);
+        function mousedownHandler(e) {
+          e.stopPropagation();
+          e.preventDefault();
+
+          interactionStart(e.pageX, e.pageY);
+        }
+        function mouseupHandler(e) {
+          e.stopPropagation();
+          e.preventDefault();
+
+          interactionEnd(e.pageX, e.pageY);
+        }
+        function mousemoveHandler(e) {
+          e.stopPropagation();
+          e.preventDefault();
+
+          if (mouseDown) {
+            interactionMove(e.pageX, e.pageY);
+          }
+        }
+
+        document.body.addEventListener(
+          "touchmove",
+          function (e) {
+            e.preventDefault();
+          },
+          false
+        );
+        document.body.addEventListener("touchstart", touchstartHandler, false);
+        document.body.addEventListener("touchend", touchendHandler, false);
+        document.body.addEventListener("touchmove", touchmoveHandler, false);
+        function touchstartHandler(e) {
+          if (!usingTouch) {
+            usingTouch = true;
+            document.body.removeEventListener("mousedown", mousedownHandler);
+            document.body.removeEventListener("mouseup", mouseupHandler);
+            document.body.removeEventListener("mousemove", mousemoveHandler);
+          }
+
+          if (e.touches.length == 1) {
+            interactionStart(
+              e.changedTouches[0].pageX,
+              e.changedTouches[0].pageY
+            );
+          }
+        }
+        function touchendHandler(e) {
+          interactionEnd(e.changedTouches[0].pageX, e.changedTouches[0].pageY);
+        }
+        function touchmoveHandler(e) {
+          if (e.touches.length == 1) {
+            interactionMove(
+              e.changedTouches[0].pageX,
+              e.changedTouches[0].pageY
+            );
+          }
+        }
+
+        document.body.addEventListener(
+          "gesturestart",
+          function (e) {
+            e.preventDefault();
+          },
+          false
+        );
+        document.body.addEventListener(
+          "gesturechange",
+          function (e) {
+            scale = base * e.scale;
+            //change scale here
+          },
+          false
+        );
+        document.body.addEventListener(
+          "gestureend",
+          function (e) {
+            base = scale;
+          },
+          false
+        );
+
+        function interactionStart(x, y) {
+          hideInstructions();
+
+          mouseDown = true;
+
+          dx = 0;
+          dy = 0;
+
+          lastX = x;
+          lastY = y;
+        }
+        function interactionEnd(x, y) {
+          mouseDown = false;
+
+          if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+            spin(dx, dy);
+          }
+        }
+        function interactionMove(x, y) {
+          dx = lastX - x;
+          dy = lastY - y;
+
+          dx *= 0.5;
+          dy *= 0.5;
+
+          rx -= dy / 100;
+          ry += dx / 100;
+
+          lastX = x;
+          lastY = y;
+        }
+      }
+
+      function spin(sdx, sdy) {
+        if (sdx > 25) {
+          sdx = 25;
+        } else if (sdx < -25) {
+          sdx = -25;
+        }
+        if (sdy > 25) {
+          sdy = 25;
+        } else if (sdy < -25) {
+          sdy = -25;
+        }
+
+        var momentum;
+
+        if (mouseDown) {
+          momentum = 0.5;
+        } else {
+          momentum = 0.98;
+        }
+
+        sdx *= momentum;
+        sdy *= momentum;
+
+        rx -= sdy / 100;
+        ry += sdx / 100;
+
+        if (Math.abs(sdx) > 0.001 || Math.abs(sdy) > 0.001) {
+          setTimeout(function () {
+            spin(sdx, sdy);
+          }, 10);
+        }
+      }
+
+      function draw() {
+        ctx.clearRect(-WIDTH, -HEIGHT, WIDTH * 2, HEIGHT * 2);
+
+        // Always put a little spin on it
+        if (!mouseDown) {
+          ry -= 0.01;
+        }
+
+        if (rx > 1) {
+          rx = 1;
+        } else if (rx < 0.5) {
+          rx = 0.5;
+        }
+
+        if (ry < -twoPi * 2) {
+          ry = 0;
+          cc += 3;
+          if (cc > 3) {
+            cc = 0;
+          }
+        } else if (ry > 0) {
+          ry = -twoPi * 2;
+          cc -= 3;
+          if (cc < 0) {
+            cc = 3;
+          }
+        }
+
+        var sx = Math.sin(rx);
+        var cx = Math.cos(rx);
+        var sy = Math.sin(ry);
+        var cy = Math.cos(ry);
+        var sz = 0; //Math.sin(0);
+        var cz = 1; //Math.cos(0);
+        var x, y, z, xy, xz, yx, yz, zx, zy, scaleFactor;
+        var c;
+
+        var i = active;
+
+        var zed = [];
+
+        while (i--) {
+          x = px[i];
+          y = py[i];
+          z = pz[i];
+
+          // rotation around y
+          yz = cy * z - sy * x;
+          yx = sy * z + cy * x;
+          // rotation around x
+          xy = cx * y - sx * yz;
+          xz = sx * y + cx * yz;
+          // rotation around z
+          zx = yx; //cz*yx - sz*xy;
+          zy = xy; //sz*yx + cz*xy;
+
+          scaleFactor = focalLength / (focalLength + yz);
+          x = zx * scaleFactor;
+          y = zy * scaleFactor;
+          z = yz;
+
+          var zsort = Math.round(1000 * scaleFactor);
+
+          if (!zed[zsort]) {
+            zed[zsort] = [];
+          }
+
+          if (i < ry * -400) {
+            c = cc + 0;
+          } else if (i < ry * -800) {
+            c = cc + 1;
+          } else {
+            c = cc + 2;
+          }
+
+          zed[zsort].push([x, y, scaleFactor * ps[i], c]);
+        }
+
+        var j = 0;
+        var p;
+
+        var c = zed.length;
+        while (i < c) {
+          if (zed[i]) {
+            j = zed[i].length;
+            while (j--) {
+              p = zed[i][j];
+
+              ctx.save();
+              ctx.translate(p[0], p[1]);
+              ctx.scale(p[2], p[2]);
+              drawStar(p[3]);
+              ctx.restore();
+            }
+          }
+
+          i++;
+        }
+
+        setTimeout(draw, 25);
+      }
+
+      function drawStar(c) {
+        if (c == 2 || c == 3) {
+          ctx.fillStyle = "#f60";
+        } else if (c == 1 || c == 4) {
+          ctx.fillStyle = "#ffd";
+        } else if (c == 0 || c == 5) {
+          ctx.fillStyle = "#20f";
+        }
+
+        if (safari) {
+          ctx.globalAlpha = 0.05;
+          circle(15);
+          circle(13);
+          circle(11);
+        } else {
+          ctx.globalAlpha = 0.1;
+          circle(13);
+        }
+
+        if (c == 2 || c == 3) {
+          ctx.fillStyle = "#fc6";
+        } else if (c == 1 || c == 4) {
+          ctx.fillStyle = "#fdf";
+        } else if (c == 0 || c == 5) {
+          ctx.fillStyle = "#69f";
+        }
+
+        ctx.globalAlpha = 0.8;
+        circle(4);
+      }
+
+      function circle(r) {
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, twoPi, "clockwise");
+        ctx.fill();
+      }
+
+      function createRandomStarVolume() {
+        var x, y, z, s;
+        var i = 150;
+        if (safari) {
+          i = 300;
+        }
+        var c = 0;
+        while (i--) {
+          if (safari && i == 0 && c < 1) {
+            c++;
+            i = 150;
+          }
+
+          px.push(
+            (17500 * Math.cos(i * 0.8)) / (i + 100) - 5 + Math.random() * 10
+          );
+          py.push(-175 + -25 + Math.round(Math.random() * 25 * 2));
+          pz.push(
+            (17500 * Math.sin(i * 0.8)) / (i + 100) - 5 + Math.random() * 10
+          );
+          ps.push(0.7 + Math.random() * 0.3);
+          pc.push(1);
+        }
+
+        active = px.length;
+      }
+    </script>
+  </body>
+</html>
