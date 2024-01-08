@@ -35,4 +35,4 @@ app.post("/events", async (req, res) => {
   res.send({ status: "Ok" });
 });
 
-app.listen(4000, () => console.log("listening on 4000!"));
+app.listen(4000, () => console.log("post services listening on 4000!"));

@@ -40,4 +40,4 @@ app.post("/events", async (req, res) => {
   res.send({ status: "Ok" });
 });
 
-app.listen(4001, () => console.log("listening on 4001!"));
+app.listen(4001, () => console.log("comments services listening on 4001!"));
