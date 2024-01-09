@@ -21,18 +21,22 @@ app.post("/posts", async (req, res) => {
     title,
   };
 
-  await axios.post("http://localhost:4005/events", {
-    type: "postCreated",
-    data: { id, title },
-  });
+  try {
+    await axios.post("http://localhost:4005/events", {
+      type: "postCreated",
+      data: { id, title },
+    });
+  } catch (error) {
+    console.log(error);
+  }
 
   res.status(201).send(posts[id]);
 });
 
-app.post("/events", async (req, res) => {
-  console.log(req.body.type);
+// app.post("/events", async (req, res) => {
+//   console.log(req.body.type);
 
-  res.send({ status: "Ok" });
-});
+//   res.send({ status: "Ok" });
+// });
 
 app.listen(4000, () => console.log("post services listening on 4000!"));
